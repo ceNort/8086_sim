@@ -5,8 +5,7 @@ use std::env;
 use std::process::exit;
 
 // TODO:
-//   - Print ASM out to command line instead of to file
-//   - Separate printing out to separate functionality
+//   - Separate printing out to separate functionality?
 //   - Mapping of registers/memory
 //   - Move some enums/structs to separate file?  Move all datatypes to separate file?
 
@@ -17,6 +16,12 @@ enum OpType {
     SUB = 0b101,
     CMP = 0b111,
     UNIMPL
+}
+
+impl fmt::Display for OpType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 impl From<u8> for OpType {
@@ -66,6 +71,43 @@ enum Opcode {
     LoopNotZero        = 0b11100000,
     JmpCXZero          = 0b11100011,
     Unimpl             = 0b11111111,
+}
+
+impl fmt::Display for Opcode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // TODO: How to handle ImmToRm, can be add/sub/cmp
+        match self {
+            Self::MovImmToReg        => write!(f, "{}", "MOV"),
+            Self::MovRmToReg         => write!(f, "{}", "MOV"),
+            Self::AddImmToAcc        => write!(f, "{}", "ADD"),
+            Self::AddRmAndReg        => write!(f, "{}", "ADD"),
+            Self::SubImmFromAcc      => write!(f, "{}", "SUB"),
+            Self::SubRmAndReg        => write!(f, "{}", "SUB"),
+            Self::CmpImmToAcc        => write!(f, "{}", "CMP"),
+            Self::CmpRmAndReg        => write!(f, "{}", "CMP"),
+            Self::JmpEqual           => write!(f, "{}", "JE"),
+            Self::JmpLess            => write!(f, "{}", "JL"),
+            Self::JmpLessOrEqual     => write!(f, "{}", "JLE"),
+            Self::JmpBelow           => write!(f, "{}", "JB"),
+            Self::JmpBelowOrEqual    => write!(f, "{}", "JBE"),
+            Self::JmpParity          => write!(f, "{}", "JP"),
+            Self::JmpOverflow        => write!(f, "{}", "JO"),
+            Self::JmpSign            => write!(f, "{}", "JS"),
+            Self::JmpNotEqual        => write!(f, "{}", "JNZ"),
+            Self::JmpNotLess         => write!(f, "{}", "JNL"),
+            Self::JmpNotLessOrEqual  => write!(f, "{}", "JNLE"),
+            Self::JmpNotBelow        => write!(f, "{}", "JNB"),
+            Self::JmpNotBelowOrEqual => write!(f, "{}", "JNBE"),
+            Self::JmpNotParity       => write!(f, "{}", "JNP"),
+            Self::JmpNotOverflow     => write!(f, "{}", "JNO"),
+            Self::JmpOnNotSign       => write!(f, "{}", "JNS"),
+            Self::Loop               => write!(f, "{}", "LOOP"),
+            Self::LoopZero           => write!(f, "{}", "LOOPZ"),
+            Self::LoopNotZero        => write!(f, "{}", "LOOPNZ"),
+            Self::JmpCXZero          => write!(f, "{}", "JCXZ"),
+            _ => write!(f, "{}", "UNIMPL")
+        }
+    }
 }
 
 impl From<u8> for Opcode {
@@ -305,15 +347,7 @@ impl Instruction {
                     }
                 };
 
-                let str_val = match opcode {
-                    Opcode::MovRmToReg => String::from("MOV"),
-                    Opcode::AddRmAndReg => String::from("ADD"),
-                    Opcode::SubRmAndReg => String::from("SUB"),
-                    Opcode::CmpRmAndReg => String::from("CMP"),
-                    _ => String::from("UNIMPL")
-                };
-
-                (d, w, s, mode, reg, r_m, disp_lo, disp_hi, data, dest, source, str_val)
+                (d, w, s, mode, reg, r_m, disp_lo, disp_hi, data, dest, source, opcode.to_string())
             },
             Opcode::MovImmToReg | Opcode::AddImmToAcc | Opcode::SubImmFromAcc | Opcode::CmpImmToAcc => {
                 let d = false;
@@ -347,22 +381,13 @@ impl Instruction {
                     }
                 };
 
-                // let dest = Instruction::get_reg_str(reg, w);
                 let dest = reg.to_string();
                 let source: String = match w {
                     true => format!("{}", data.unwrap()),
                     false => format!("{}", data.unwrap() as i8)
                 };
 
-                let str_val = match opcode {
-                    Opcode::MovImmToReg => String::from("MOV"),
-                    Opcode::AddImmToAcc => String::from("ADD"),
-                    Opcode::SubImmFromAcc => String::from("SUB"),
-                    Opcode::CmpImmToAcc => String::from("CMP"),
-                    _ => String::from("UNIMPL")
-                };
-
-                (d, w, s, mode, reg, r_m, disp_lo, disp_hi, data, dest, source, str_val)
+                (d, w, s, mode, reg, r_m, disp_lo, disp_hi, data, dest, source, opcode.to_string())
             },
             Opcode::ImmToRm => {
                 let inst_len = full_inst.len();
@@ -432,12 +457,7 @@ impl Instruction {
                     }
                 };
 
-                let mut str_val = match op_type { // TODO: impl Display and use to_string()
-                    OpType::ADD => String::from("ADD"),
-                    OpType::SUB => String::from("SUB"),
-                    OpType::CMP => String::from("CMP"),
-                    _ => String::from("UNIMPL")
-                };
+                let mut str_val = op_type.to_string();
 
                 match mode.unwrap() {
                     Mode::Reg => {},
@@ -470,32 +490,7 @@ impl Instruction {
 
                 let source = format!("{}", full_inst[1] as i8);
 
-                let str_val = match opcode { // TODO: impl Display and use to_string()
-                    Opcode::JmpEqual           => String::from("JE"),
-                    Opcode::JmpLess            => String::from("JL"),
-                    Opcode::JmpLessOrEqual     => String::from("JLE"),
-                    Opcode::JmpBelow           => String::from("JB"),
-                    Opcode::JmpBelowOrEqual    => String::from("JBE"),
-                    Opcode::JmpParity          => String::from("JP"),
-                    Opcode::JmpOverflow        => String::from("JO"),
-                    Opcode::JmpSign            => String::from("JS"),
-                    Opcode::JmpNotEqual        => String::from("JNZ"),
-                    Opcode::JmpNotLess         => String::from("JNL"),
-                    Opcode::JmpNotLessOrEqual  => String::from("JNLE"),
-                    Opcode::JmpNotBelow        => String::from("JNB"),
-                    Opcode::JmpNotBelowOrEqual => String::from("JNBE"),
-                    Opcode::JmpNotParity       => String::from("JNP"),
-                    Opcode::JmpNotOverflow     => String::from("JNO"),
-                    Opcode::JmpOnNotSign       => String::from("JNS"),
-                    Opcode::Loop               => String::from("LOOP"),
-                    Opcode::LoopZero           => String::from("LOOPZ"),
-                    Opcode::LoopNotZero        => String::from("LOOPNZ"),
-                    Opcode::JmpCXZero          => String::from("JCXZ"),
-                    _ => String::from("UNIMPL")
-                };
-
-
-                (d, w, s, mode, reg, r_m, disp_lo, disp_hi, data, dest, source, str_val)
+                (d, w, s, mode, reg, r_m, disp_lo, disp_hi, data, dest, source, opcode.to_string())
             },
             Opcode::Unimpl => {
                 panic!("YOU SHOULDN'T SEE THIS");
@@ -548,7 +543,7 @@ fn main() {
         fs::create_dir_all("output").expect("Failed to create output directory");
     }
 
-    let buffer = fs::read("data/listing_0043_immediate_movs")
+    let buffer = fs::read(filepath)
         .expect("Failed to read file!");
 
     if debug {
