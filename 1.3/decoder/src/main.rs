@@ -360,7 +360,7 @@ impl Instruction {
                                 (None, None)
                             }
                         };
-                        
+
                         let dest = match r_m.unwrap() {
                             0b110 => format!("[{}]", u16::from(disp_hi.unwrap()) << 8 | u16::from(disp_lo.unwrap())),
                             _ => format!("[{}]",Instruction::get_mem_str(&r_m.unwrap()))

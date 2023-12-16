@@ -201,22 +201,6 @@ struct Instruction {
 }
 
 impl Instruction {
-    fn get_reg_str(reg: u8, w: bool) -> String { // TODO: This can go away once instances with r_m are handled
-        let reg_str = match reg {
-            0b000 => if w { "AX" } else { "AL" },
-            0b001 => if w { "CX" } else { "CL" },
-            0b010 => if w { "DX" } else { "DL" },
-            0b011 => if w { "BX" } else { "BL" },
-            0b100 => if w { "SP" } else { "AH" },
-            0b101 => if w { "BP" } else { "CH" },
-            0b110 => if w { "SI" } else { "DH" },
-            0b111 => if w { "DI" } else { "BH" },
-            _ => "FAIL"
-        };
-
-        String::from(reg_str)
-    }
-
     fn get_mem_str(r_m: &u8) -> String {
         let mem_str = match r_m {
             0b000 => "BX + SI",
@@ -260,7 +244,6 @@ impl Instruction {
                                 let disp_lo = Some(full_inst[2]);
                                 let disp_hi = Some(full_inst[3]);
                                 let rm = format!("[{}]",Instruction::get_mem_str(&r_m.unwrap()));
-                                // let rg = Instruction::get_reg_str(reg, w);
 
                                 let (dest, source) = match d {
                                     false => (rm, reg.to_string()),
@@ -273,7 +256,6 @@ impl Instruction {
                                 let disp_lo = None;
                                 let disp_hi = None;
                                 let rm =  format!("[{}]",Instruction::get_mem_str(&r_m.unwrap()));
-                                // let rg = Instruction::get_reg_str(reg, w);
 
                                 let (dest, source) = match d {
                                     false => (rm, reg.to_string()),
@@ -288,7 +270,6 @@ impl Instruction {
                         let disp_lo: Option<u8> = Some(full_inst[2]);
                         let disp_hi: Option<u8> =  None;
                         let rm = format!("[{} + {}]", Instruction::get_mem_str(&r_m.unwrap()), disp_lo.unwrap());
-                        // let rg = Instruction::get_reg_str(reg, w);
 
                         let (dest, source) = match d {
                             false => (rm, reg.to_string()),
@@ -302,7 +283,6 @@ impl Instruction {
                         let disp_hi = Some(full_inst[3]);
                         let full_disp = u16::from(disp_hi.unwrap()) << 8 | u16::from(disp_lo.unwrap());
                         let rm = format!("[{} + {}]", Instruction::get_mem_str(&r_m.unwrap()), full_disp);
-                        // let rg = Instruction::get_reg_str(reg, w);
 
                         let (dest, source) = match d {
                             false => (rm, reg.to_string()),
@@ -314,12 +294,11 @@ impl Instruction {
                     Mode::Reg => {
                         let disp_lo = None;
                         let disp_hi = None;
-                        let rm = Instruction::get_reg_str(r_m.unwrap(), w); // TODO: Is this right?  Somehow this works, but need to handle getting string
-                        // let rg = Instruction::get_reg_str(reg, w);
+                        let rm = Reg::from(r_m.unwrap() << 1 | u8::from(w));
 
                         let (dest, source) = match d {
-                            false => (rm, reg.to_string()),
-                            true => (reg.to_string(), rm)
+                            false => (rm.to_string(), reg.to_string()),
+                            true => (reg.to_string(), rm.to_string())
                         };
 
                         (disp_lo, disp_hi, dest, source)
@@ -446,7 +425,8 @@ impl Instruction {
                     Mode::Reg => {
                         let disp_lo = None;
                         let disp_hi = None;
-                        let dest = Instruction::get_reg_str(r_m.unwrap(), w); // TODO: Handle this
+                        let rm_reg = Reg::from(r_m.unwrap() << 1 | u8::from(w));
+                        let dest = rm_reg.to_string();
 
                         (disp_lo, disp_hi, dest)
                     }
