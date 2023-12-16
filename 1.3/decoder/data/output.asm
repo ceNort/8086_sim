@@ -63,7 +63,7 @@ CMP [BX + 2], CX
 CMP [BP + SI + 4], BH
 CMP [BP + DI + 6], DI
 CMP BYTE [BX], 34
-CMP WORD [BP], 29
+CMP WORD [4834], 29
 CMP AX, [BP + 0]
 CMP AL, [BX + SI]
 CMP AX, BX

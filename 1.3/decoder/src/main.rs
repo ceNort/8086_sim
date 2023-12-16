@@ -350,15 +350,20 @@ impl Instruction {
 
                 let (disp_lo, disp_hi, dest) = match Mode::from(mode_bits) {
                     Mode::Mem => {
-                        let dest = format!("[{}]",Instruction::get_mem_str(&r_m.unwrap()));
+
 
                         let (disp_lo, disp_hi) = match r_m.unwrap() {
                             0b110 => {
-                                (Some(full_inst[3]), Some(full_inst[4]))
+                                (Some(full_inst[2]), Some(full_inst[3]))
                             },
                             _ => {
                                 (None, None)
                             }
+                        };
+                        
+                        let dest = match r_m.unwrap() {
+                            0b110 => format!("[{}]", u16::from(disp_hi.unwrap()) << 8 | u16::from(disp_lo.unwrap())),
+                            _ => format!("[{}]",Instruction::get_mem_str(&r_m.unwrap()))
                         };
 
                         (disp_lo, disp_hi, dest)
