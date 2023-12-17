@@ -8,6 +8,7 @@ use std::process::exit;
 //   - Separate printing out to separate functionality?
 //   - Mapping of registers/memory
 //   - Move some enums/structs to separate file?  Move all datatypes to separate file?
+//   - Finish implementing commented out opcodes?
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[repr(u8)]
@@ -75,7 +76,7 @@ enum Opcode {
 
 impl fmt::Display for Opcode {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // TODO: How to handle ImmToRm, can be add/sub/cmp
+        // ImmToRm handled separately
         match self {
             Self::MovImmToReg        => write!(f, "{}", "MOV"),
             Self::MovRmToReg         => write!(f, "{}", "MOV"),
@@ -224,6 +225,53 @@ impl From<u8> for Mode {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+#[repr(u8)]
+enum EffectiveAddress {
+    BX_SI = 0b000,
+    BX_DI = 0b001,
+    BP_SI = 0b010,
+    BP_DI = 0b011,
+    SI = 0b100,
+    DI = 0b101,
+    BP = 0b110,
+    BX = 0b111,
+    UNIMPL = 0b11111111,
+}
+
+impl From<u8> for EffectiveAddress {
+    fn from(value: u8) -> Self{
+        match value {
+            0b000 => Self::BX_SI,
+            0b001 => Self::BX_DI,
+            0b010 => Self::BP_SI,
+            0b011 => Self::BP_DI,
+            0b100 => Self::SI,
+            0b101 => Self::DI,
+            0b110 => Self::BP,
+            0b111 => Self::BX,
+            _ => Self::UNIMPL
+        }
+    }
+}
+
+impl fmt::Display for EffectiveAddress {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // ImmToRm handled separately
+        match self {
+            Self::BX_SI => write!(f, "{}", "BX + SI"),
+            Self::BX_DI => write!(f, "{}", "BX + DI"),
+            Self::BP_SI => write!(f, "{}", "BP + SI"),
+            Self::BP_DI => write!(f, "{}", "BP + DI"),
+            Self::SI => write!(f, "{}", "SI"),
+            Self::DI => write!(f, "{}", "DI"),
+            Self::BP => write!(f, "{}", "BP"),
+            Self::BX => write!(f, "{}", "BX"),
+            _ => write!(f, "{}", "UNIMPL")
+        }
+    }
+}
+
 #[derive(Debug)]
 struct Instruction {
     raw_bin: String,
@@ -243,22 +291,6 @@ struct Instruction {
 }
 
 impl Instruction {
-    fn get_mem_str(r_m: &u8) -> String {
-        let mem_str = match r_m {
-            0b000 => "BX + SI",
-            0b001 => "BX + DI",
-            0b010 => "BP + SI",
-            0b011 => "BP + DI",
-            0b100 => "SI",
-            0b101 => "DI",
-            0b110 => "BP",
-            0b111 => "BX",
-            _ => "FAIL"
-        };
-
-        String::from(mem_str)
-    }
-
     fn new(opcode: Opcode, full_inst: &[u8]) -> Instruction {
         let mut raw_bin = String::new();
         for inst in full_inst {
@@ -285,11 +317,11 @@ impl Instruction {
                             0b110 => {
                                 let disp_lo = Some(full_inst[2]);
                                 let disp_hi = Some(full_inst[3]);
-                                let rm = format!("[{}]",Instruction::get_mem_str(&r_m.unwrap()));
+                                let rm = EffectiveAddress::from(r_m.unwrap());
 
                                 let (dest, source) = match d {
-                                    false => (rm, reg.to_string()),
-                                    true => (reg.to_string(), rm)
+                                    false => (rm.to_string(), reg.to_string()),
+                                    true => (reg.to_string(), rm.to_string())
                                 };
 
                                 (disp_lo, disp_hi, dest, source)
@@ -297,11 +329,11 @@ impl Instruction {
                             _ => {
                                 let disp_lo = None;
                                 let disp_hi = None;
-                                let rm =  format!("[{}]",Instruction::get_mem_str(&r_m.unwrap()));
+                                let rm = EffectiveAddress::from(r_m.unwrap());
 
                                 let (dest, source) = match d {
-                                    false => (rm, reg.to_string()),
-                                    true => (reg.to_string(), rm)
+                                    false => (rm.to_string(), reg.to_string()),
+                                    true => (reg.to_string(), rm.to_string())
                                 };
 
                                 (disp_lo, disp_hi, dest, source)
@@ -311,11 +343,12 @@ impl Instruction {
                     Mode::Mem8 => {
                         let disp_lo: Option<u8> = Some(full_inst[2]);
                         let disp_hi: Option<u8> =  None;
-                        let rm = format!("[{} + {}]", Instruction::get_mem_str(&r_m.unwrap()), disp_lo.unwrap());
+                        let rm = EffectiveAddress::from(r_m.unwrap());
+                        let dest_str = format!("[{} + {}]", rm.to_string(), disp_lo.unwrap());
 
                         let (dest, source) = match d {
-                            false => (rm, reg.to_string()),
-                            true => (reg.to_string(), rm)
+                            false => (dest_str, reg.to_string()),
+                            true => (reg.to_string(), dest_str)
                         };
 
                         (disp_lo, disp_hi, dest, source)
@@ -324,11 +357,12 @@ impl Instruction {
                         let disp_lo = Some(full_inst[2]);
                         let disp_hi = Some(full_inst[3]);
                         let full_disp = u16::from(disp_hi.unwrap()) << 8 | u16::from(disp_lo.unwrap());
-                        let rm = format!("[{} + {}]", Instruction::get_mem_str(&r_m.unwrap()), full_disp);
+                        let rm = EffectiveAddress::from(r_m.unwrap());
+                        let dest_str = format!("[{} + {}]", rm.to_string(), full_disp);
 
                         let (dest, source) = match d {
-                            false => (rm, reg.to_string()),
-                            true => (reg.to_string(), rm)
+                            false => (dest_str, reg.to_string()),
+                            true => (reg.to_string(), dest_str)
                         };
 
                         (disp_lo, disp_hi, dest, source)
@@ -417,8 +451,6 @@ impl Instruction {
 
                 let (disp_lo, disp_hi, dest) = match Mode::from(mode_bits) {
                     Mode::Mem => {
-                        // let dest = format!("[{}]",Instruction::get_mem_str(&r_m.unwrap()));
-
                         let (disp_lo, disp_hi) = match r_m.unwrap() {
                             0b110 => {
                                 (Some(full_inst[2]), Some(full_inst[3]))
@@ -428,9 +460,11 @@ impl Instruction {
                             }
                         };
 
+                        let rm = EffectiveAddress::from(r_m.unwrap());
+
                         let dest = match r_m.unwrap() {
                             0b110 => format!("[{}]", u16::from(disp_hi.unwrap()) << 8 | u16::from(disp_lo.unwrap())),
-                            _ => format!("[{}]", Instruction::get_mem_str(&r_m.unwrap()))
+                            _ => format!("[{}]", rm.to_string()),
                         };
 
                         (disp_lo, disp_hi, dest)
@@ -438,7 +472,8 @@ impl Instruction {
                     Mode::Mem8 => {
                         let disp_lo: Option<u8> = Some(full_inst[2]);
                         let disp_hi: Option<u8> =  None;
-                        let dest = format!("[{} + {}]", Instruction::get_mem_str(&r_m.unwrap()), disp_lo.unwrap());
+                        let rm = EffectiveAddress::from(r_m.unwrap());
+                        let dest = format!("[{} + {}]", rm.to_string(), disp_lo.unwrap());
 
                         (disp_lo, disp_hi, dest)
                     },
@@ -446,7 +481,8 @@ impl Instruction {
                         let disp_lo = Some(full_inst[2]);
                         let disp_hi = Some(full_inst[3]);
                         let full_disp = u16::from(disp_hi.unwrap()) << 8 | u16::from(disp_lo.unwrap());
-                        let dest = format!("[{} + {}]", Instruction::get_mem_str(&r_m.unwrap()), full_disp);
+                        let rm = EffectiveAddress::from(r_m.unwrap());
+                        let dest = format!("[{} + {}]", rm.to_string(), full_disp);
 
                         (disp_lo, disp_hi, dest)
                     },
@@ -471,9 +507,7 @@ impl Instruction {
                         }
                     }
                 }
-                // TODO: does this still work replacing op_type with reg?
-                (d, w, Some(s), mode, reg, r_m, disp_lo, disp_hi, data, dest, source, str_val) // Will op_type fuck this up?
-                // (d, w, Some(s), mode, op_type as u8, r_m, disp_lo, disp_hi, data, dest, source, str_val) // Will op_type fuck this up?
+                (d, w, Some(s), mode, reg, r_m, disp_lo, disp_hi, data, dest, source, str_val)
             },
             Opcode::JmpEqual | Opcode::JmpLess| Opcode::JmpLessOrEqual | Opcode::JmpBelow | Opcode::JmpBelowOrEqual |
             Opcode::JmpParity | Opcode::JmpOverflow | Opcode::JmpSign | Opcode::JmpNotEqual | Opcode::JmpNotLess | Opcode::JmpNotLessOrEqual |
@@ -483,8 +517,7 @@ impl Instruction {
                 let w = false;
                 let s = None;
                 let mode = None;
-                // let reg = 0;
-                let reg = Reg::UNIMPL; // TODO: is this right?
+                let reg = Reg::UNIMPL; // NOTE: If there are issues, it may be here
                 let r_m = None;
                 let disp_lo = None;
                 let disp_hi = None;
