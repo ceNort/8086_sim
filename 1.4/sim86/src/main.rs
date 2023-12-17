@@ -275,7 +275,7 @@ impl Instruction {
                 let w = (first_byte & 0b1) != 0;
                 let s = None;
                 let mode =  Some(Mode::from(mode_bits));
-                let reg =  Reg::from(second_byte >> 3 & 0b111 << 1 | u8::from(w));
+                let reg =  Reg::from((second_byte >> 3 & 0b111) << 1 | u8::from(w));
                 let r_m =  Some(second_byte & 0b111);
                 let data = None;
 
@@ -366,7 +366,7 @@ impl Instruction {
 
                 let reg;
                 if opcode == Opcode::MovRmToReg {
-                    reg = Reg::from(first_byte & 0b111 << 1 | u8::from(w));
+                    reg = Reg::from((first_byte & 0b111) << 1 | u8::from(w));
                 } else {
                     reg = Reg::from(0b000 << 1 | u8::from(w));
                 }
@@ -400,7 +400,7 @@ impl Instruction {
                 let s = ((first_byte >> 1) & 0b1) != 0;
                 let mode =  Some(Mode::from(mode_bits));
                 let op_type =  OpType::from(second_byte >> 3 & 0b111);
-                let reg = Reg::from(second_byte >> 3 & 0b111 << 1 | u8::from(w));
+                let reg = Reg::from((second_byte >> 3 & 0b111) << 1 | u8::from(w));
                 let r_m =  Some(second_byte & 0b111);
 
                 let data = match (s, w) {
@@ -415,19 +415,22 @@ impl Instruction {
 
                 let source = format!("{}", data.unwrap());
 
-
-
                 let (disp_lo, disp_hi, dest) = match Mode::from(mode_bits) {
                     Mode::Mem => {
-                        let dest = format!("[{}]",Instruction::get_mem_str(&r_m.unwrap()));
+                        // let dest = format!("[{}]",Instruction::get_mem_str(&r_m.unwrap()));
 
                         let (disp_lo, disp_hi) = match r_m.unwrap() {
                             0b110 => {
-                                (Some(full_inst[3]), Some(full_inst[4]))
+                                (Some(full_inst[2]), Some(full_inst[3]))
                             },
                             _ => {
                                 (None, None)
                             }
+                        };
+
+                        let dest = match r_m.unwrap() {
+                            0b110 => format!("[{}]", u16::from(disp_hi.unwrap()) << 8 | u16::from(disp_lo.unwrap())),
+                            _ => format!("[{}]", Instruction::get_mem_str(&r_m.unwrap()))
                         };
 
                         (disp_lo, disp_hi, dest)
