@@ -1,6 +1,7 @@
 #![allow(dead_code, unused_variables)]
 
 mod instruction;
+mod mem;
 
 use instruction::*;
 use std::fs;
@@ -9,7 +10,6 @@ use std::env;
 use std::process::exit;
 
 // TODO:
-//   - Separate printing out to separate functionality?
 //   - Mapping of registers/memory
 //   - Finish implementing commented out opcodes?
 
@@ -66,6 +66,28 @@ fn main() {
 
     let mut debug_output = String::new(); // For debug file
 
+    let instructions: Vec<Instruction> = read_buffer_into_instructions(buffer, debug, &mut debug_output);
+
+    if debug {
+        fs::write("output/debug_output.txt", &debug_output).expect("Failed to write debug output file.");
+    }
+
+    let mut asm_output = String::from("bits 16\n");
+
+    for inst in instructions {
+        let inst_string = format!("{} {}, {}\n", inst.str_val, inst.dest, inst.source);
+
+        asm_output.push_str(&inst_string);
+    }
+
+    println!("{asm_output}");
+
+    if to_file {
+        fs::write("output/output.asm", asm_output).expect("Unable to write ASM file");
+    }
+}
+
+fn read_buffer_into_instructions(buffer: Vec<u8>, debug: bool, debug_output: &mut String) -> Vec<Instruction> {
     let mut instructions: Vec<Instruction> = Vec::new();
 
     let mut index = 0;
@@ -307,22 +329,5 @@ fn main() {
         }
     }
 
-    if debug {
-        fs::write("output/debug_output.txt", &debug_output).expect("Failed to write debug output file.");
-    }
-
-
-    let mut asm_output = String::from("bits 16\n");
-
-    for inst in instructions {
-        let inst_string = format!("{} {}, {}\n", inst.str_val, inst.dest, inst.source);
-
-        asm_output.push_str(&inst_string);
-    }
-
-    println!("{asm_output}");
-
-    if to_file {
-        fs::write("output/output.asm", asm_output).expect("Unable to write ASM file");
-    }
+    instructions
 }

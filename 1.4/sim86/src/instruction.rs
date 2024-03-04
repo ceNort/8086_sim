@@ -1,4 +1,5 @@
 use std::fmt;
+use super::mem::*;
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[repr(u8)]
@@ -143,59 +144,6 @@ impl From<u8> for Opcode {
 
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
-pub enum Reg { // TODO: Does this need to be pub?
-    // REG = Instruction.reg && Instruction.w
-    AL = 0b0000,
-    AX = 0b0001,
-    CX = 0b0011,
-    CL = 0b0010,
-    DX = 0b0101,
-    DL = 0b0100,
-    BX = 0b0111,
-    BL = 0b0110,
-    SP = 0b1001,
-    AH = 0b1000,
-    BP = 0b1011,
-    CH = 0b1010,
-    SI = 0b1101,
-    DH = 0b1100,
-    DI = 0b1111,
-    BH = 0b1110,
-    UNIMPL = 0b111111,
-}
-
-impl From<u8> for Reg {
-    fn from(value: u8) -> Self{
-        match value {
-            0b0000 => Self::AL,
-            0b0001 => Self::AX,
-            0b0011 => Self::CX,
-            0b0010 => Self::CL,
-            0b0101 => Self::DX,
-            0b0100 => Self::DL,
-            0b0111 => Self::BX,
-            0b0110 => Self::BL,
-            0b1001 => Self::SP,
-            0b1000 => Self::AH,
-            0b1011 => Self::BP,
-            0b1010 => Self::CH,
-            0b1101 => Self::SI,
-            0b1100 => Self::DH,
-            0b1111 => Self::DI,
-            0b1110 => Self::BH,
-            _ => Self::UNIMPL
-        }
-    }
-}
-
-impl fmt::Display for Reg {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-#[repr(u8)]
 pub enum Mode { // TODO: Does this need to be pub?
     Mem = 0b00,
     Mem8 = 0b01,
@@ -211,53 +159,6 @@ impl From<u8> for Mode {
             0b10 => Mode::Mem16,
             0b11 => Mode::Reg,
             _ => todo!()
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-#[repr(u8)]
-pub enum EffectiveAddress { // TODO: does this need to be pub?
-    BX_SI = 0b000,
-    BX_DI = 0b001,
-    BP_SI = 0b010,
-    BP_DI = 0b011,
-    SI = 0b100,
-    DI = 0b101,
-    BP = 0b110,
-    BX = 0b111,
-    UNIMPL = 0b11111111,
-}
-
-impl From<u8> for EffectiveAddress {
-    fn from(value: u8) -> Self{
-        match value {
-            0b000 => Self::BX_SI,
-            0b001 => Self::BX_DI,
-            0b010 => Self::BP_SI,
-            0b011 => Self::BP_DI,
-            0b100 => Self::SI,
-            0b101 => Self::DI,
-            0b110 => Self::BP,
-            0b111 => Self::BX,
-            _ => Self::UNIMPL
-        }
-    }
-}
-
-impl fmt::Display for EffectiveAddress {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // ImmToRm handled separately
-        match self {
-            Self::BX_SI => write!(f, "{}", "BX + SI"),
-            Self::BX_DI => write!(f, "{}", "BX + DI"),
-            Self::BP_SI => write!(f, "{}", "BP + SI"),
-            Self::BP_DI => write!(f, "{}", "BP + DI"),
-            Self::SI => write!(f, "{}", "SI"),
-            Self::DI => write!(f, "{}", "DI"),
-            Self::BP => write!(f, "{}", "BP"),
-            Self::BX => write!(f, "{}", "BX"),
-            _ => write!(f, "{}", "UNIMPL")
         }
     }
 }
