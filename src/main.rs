@@ -8,6 +8,7 @@ use std::fs;
 use std::convert::From;
 use std::env;
 use std::process::exit;
+use mem::Memory;
 
 // TODO:
 //   - Mapping of registers/memory
@@ -64,6 +65,9 @@ fn main() {
         fs::write("output/orig_bytes.txt", bin_str).expect("Failed to write orig bin file.");
     }
 
+    // Initialize Memory
+    let mut main_mem = Memory::new();
+
     let mut debug_output = String::new(); // For debug file
 
     let instructions: Vec<Instruction> = read_buffer_into_instructions(buffer, debug, &mut debug_output);
@@ -75,9 +79,17 @@ fn main() {
     let mut asm_output = String::from("bits 16\n");
 
     for inst in instructions {
+        // Write to output
         let inst_string = format!("{} {}, {}\n", inst.str_val, inst.dest, inst.source);
 
         asm_output.push_str(&inst_string);
+
+        // Execute any MOV instructions
+        match inst.opcode {
+            Opcode::MovImmToReg => inst.execute(&mut main_mem),
+            Opcode::MovRmToReg => inst.execute(&mut main_mem),
+            _ => println!("Not executing instruction"),
+        }
     }
 
     println!("{asm_output}");

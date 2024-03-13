@@ -58,7 +58,7 @@ impl fmt::Display for Reg {
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
 pub enum EffectiveAddress {
-BX_SI = 0b000,
+    BX_SI = 0b000,
     BX_DI = 0b001,
     BP_SI = 0b010,
     BP_DI = 0b011,
@@ -102,63 +102,62 @@ impl fmt::Display for EffectiveAddress {
     }
 }
 
-pub struct Register {
-    name: Reg,
-    value: Option<u32>,
+pub struct MemLoc {
+    name: String,
+    value: u8,
 }
 
-impl Register {
-    pub fn new(name: Reg) -> Self {
-        Register {
+impl MemLoc {
+    pub fn new(name: String) -> Self {
+        MemLoc {
             name,
-            value: None,
+            value: 0,
         }
     }
 
-    pub fn write(&mut self, val: u32) {
-        self.value = Some(val);
+    pub fn write(&mut self, val: u8) {
+        self.value = val;
     }
+
+    pub fn read(self) -> u8 { self.value }
 }
 
 pub struct Memory {
-    al: Register,
-    cl: Register,
-    dl: Register,
-    bl: Register,
-    ah: Register,
-    ch: Register,
-    dh: Register,
-    bh: Register,
-    sp: Register,
-    bp: Register,
-    si: Register,
-    di: Register,
+    ax: MemLoc,
+    cx: MemLoc,
+    dx: MemLoc,
+    bx: MemLoc,
+    sp: MemLoc,
+    bp: MemLoc,
+    si: MemLoc,
+    di: MemLoc,
 }
 
 impl Memory {
     pub fn new() -> Self {
         Self {
-            al: Register::new(Reg::AL),
-            cl: Register::new(Reg::CL),
-            dl: Register::new(Reg::DL),
-            bl: Register::new(Reg::BL),
-            ah: Register::new(Reg::AH),
-            ch: Register::new(Reg::CH),
-            dh: Register::new(Reg::DH),
-            bh: Register::new(Reg::BH),
-            sp: Register::new(Reg::SP),
-            bp: Register::new(Reg::BP),
-            si: Register::new(Reg::SI),
-            di: Register::new(Reg::DI),
+            ax: MemLoc::new(String::from("AX")),
+            cx: MemLoc::new(String::from("CX")),
+            dx: MemLoc::new(String::from("DX")),
+            bx: MemLoc::new(String::from("BX")),
+            sp: MemLoc::new(String::from("SP")),
+            bp: MemLoc::new(String::from("BP")),
+            si: MemLoc::new(String::from("SI")),
+            di: MemLoc::new(String::from("DI")),
         }
     }
 
-    pub fn ax(self) -> Register {
-        // TODO: Left off here, I have no idea if this is right but my brain hurts tonight
-        let val = (&self.ah.value.unwrap() << 4) | &self.al.value.unwrap();
-        Register {
-            name: Reg::AX,
-            value: Some(val),
+    pub fn get_loc(&self, loc: &str) -> Option<&MemLoc> {
+        match loc {
+            "AX" => Some(&self.ax),
+            "CX" => Some(&self.cx),
+            "DX" => Some(&self.dx),
+            "BX" => Some(&self.bx),
+            "SP" => Some(&self.sp),
+            "BP" => Some(&self.bp),
+            "SI" => Some(&self.si),
+            "DI" => Some(&self.di),
+            _ => None,
         }
     }
 }

@@ -144,7 +144,7 @@ impl From<u8> for Opcode {
 
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
-pub enum Mode { // TODO: Does this need to be pub?
+pub enum Mode {
     Mem = 0b00,
     Mem8 = 0b01,
     Mem16 = 0b10,
@@ -164,7 +164,7 @@ impl From<u8> for Mode {
 }
 
 #[derive(Debug)]
-pub struct Instruction { // TODO: Do all of these need to be pub? Maybe none and accessors?
+pub struct Instruction {
     pub raw_bin: String,
     pub opcode: Opcode,
     pub d: bool, // Reg is Destination
@@ -441,6 +441,14 @@ impl Instruction {
             dest,
             source,
             str_val
+        }
+    }
+
+    pub fn execute(self, mem: &mut Memory) {
+        match self.opcode {
+            Opcode::MovImmToReg => println!("Moving Imm to Reg"),
+            Opcode::MovRmToReg => println!("Moving Rm to Reg"),
+            _ => todo!(),
         }
     }
 }
