@@ -446,7 +446,16 @@ impl Instruction {
 
     pub fn execute(self, mem: &mut Memory) {
         match self.opcode {
-            Opcode::MovImmToReg => println!("Moving Imm to Reg"),
+            Opcode::MovImmToReg => {
+                println!("Moving Imm to Reg");
+                // Get mem loc
+                let mut loc: &mut MemLoc = mem.get_loc(self.dest.as_str())
+                    .expect("No memory location found!");
+
+                let val = self.source.parse::<u8>().unwrap(); // TODO: error handling
+                loc.write(val);
+
+            },
             Opcode::MovRmToReg => println!("Moving Rm to Reg"),
             _ => todo!(),
         }

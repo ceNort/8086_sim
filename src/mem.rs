@@ -1,6 +1,6 @@
 #[allow(non_camel_case_types)]
 
-use std::fmt;
+use std::fmt::{self, Formatter};
 
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
@@ -50,7 +50,7 @@ impl From<u8> for Reg {
 }
 
 impl fmt::Display for Reg {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(f, "{:?}", self)
     }
 }
@@ -86,7 +86,7 @@ impl From<u8> for EffectiveAddress {
 }
 
 impl fmt::Display for EffectiveAddress {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         // ImmToRm handled separately
         match self {
             Self::BX_SI => write!(f, "{}", "BX + SI"),
@@ -102,6 +102,7 @@ impl fmt::Display for EffectiveAddress {
     }
 }
 
+#[derive(Debug)]
 pub struct MemLoc {
     name: String,
     value: u8,
@@ -122,6 +123,7 @@ impl MemLoc {
     pub fn read(self) -> u8 { self.value }
 }
 
+#[derive(Debug)]
 pub struct Memory {
     ax: MemLoc,
     cx: MemLoc,
@@ -147,16 +149,16 @@ impl Memory {
         }
     }
 
-    pub fn get_loc(&self, loc: &str) -> Option<&MemLoc> {
+    pub fn get_loc(&mut self, loc: &str) -> Option<&mut MemLoc> {
         match loc {
-            "AX" => Some(&self.ax),
-            "CX" => Some(&self.cx),
-            "DX" => Some(&self.dx),
-            "BX" => Some(&self.bx),
-            "SP" => Some(&self.sp),
-            "BP" => Some(&self.bp),
-            "SI" => Some(&self.si),
-            "DI" => Some(&self.di),
+            "AX" => Some(&mut self.ax),
+            "CX" => Some(&mut self.cx),
+            "DX" => Some(&mut self.dx),
+            "BX" => Some(&mut self.bx),
+            "SP" => Some(&mut self.sp),
+            "BP" => Some(&mut self.bp),
+            "SI" => Some(&mut self.si),
+            "DI" => Some(&mut self.di),
             _ => None,
         }
     }

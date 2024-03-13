@@ -68,6 +68,9 @@ fn main() {
     // Initialize Memory
     let mut main_mem = Memory::new();
 
+    println!("MEMORY START:");
+    println!("{:?}", main_mem);
+
     let mut debug_output = String::new(); // For debug file
 
     let instructions: Vec<Instruction> = read_buffer_into_instructions(buffer, debug, &mut debug_output);
@@ -90,7 +93,12 @@ fn main() {
             Opcode::MovRmToReg => inst.execute(&mut main_mem),
             _ => println!("Not executing instruction"),
         }
+
+        println!("{:?}", main_mem);
     }
+
+    println!("MEMORY END:");
+    println!("{:?}", main_mem);
 
     println!("{asm_output}");
 
