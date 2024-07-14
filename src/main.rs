@@ -32,18 +32,18 @@ fn main() {
         }
     }
 
-    let debug = flags.contains(&"debug");
+    let bindump = flags.contains(&"bindump");
     let to_file = flags.contains(&"file");
 
     // If output, create dir if it doesn't exist
-    if debug || to_file {
+    if bindump || to_file {
         fs::create_dir_all("output").expect("Failed to create output directory");
     }
 
     let buffer = fs::read(filepath)
         .expect("Failed to read file!");
 
-    if debug {
+    if bindump {
         // Write binary to file for easy reading
         let mut hex_str = String::new();
         let mut bin_str = String::new();
@@ -73,9 +73,9 @@ fn main() {
 
     let mut debug_output = String::new(); // For debug file
 
-    let instructions: Vec<Instruction> = read_buffer_into_instructions(buffer, debug, &mut debug_output);
+    let instructions: Vec<Instruction> = read_buffer_into_instructions(buffer, bindump, &mut debug_output);
 
-    if debug {
+    if bindump {
         fs::write("output/debug_output.txt", &debug_output).expect("Failed to write debug output file.");
     }
 
