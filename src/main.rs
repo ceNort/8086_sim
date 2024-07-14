@@ -32,11 +32,12 @@ fn main() {
         }
     }
 
+    let debug = flags.contains(&"debug");
     let bindump = flags.contains(&"bindump");
     let to_file = flags.contains(&"file");
 
     // If output, create dir if it doesn't exist
-    if bindump || to_file {
+    if debug || bindump || to_file {
         fs::create_dir_all("output").expect("Failed to create output directory");
     }
 
@@ -75,7 +76,7 @@ fn main() {
 
     let instructions: Vec<Instruction> = read_buffer_into_instructions(buffer, bindump, &mut debug_output);
 
-    if bindump {
+    if debug {
         fs::write("output/debug_output.txt", &debug_output).expect("Failed to write debug output file.");
     }
 
