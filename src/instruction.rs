@@ -105,18 +105,18 @@ impl fmt::Display for Opcode {
 impl From<u8> for Opcode {
     fn from(value: u8) -> Self {
         match value {
-            0b100010 => Opcode::MovRmToReg,
+            0b100010   => Opcode::MovRmToReg,
             // 0b1100011 => Opcode::MovImmToRm,
-            0b1101 => Opcode::MovImmToReg,
+            0b1101     => Opcode::MovImmToReg,
             // 0b1010000 => Opcode::MovMemToAcc,
             // 0b1010001 => Opcode::MovAccToMem,
-            0b000000 => Opcode::AddRmAndReg,
-            0b0000010 => Opcode::AddImmToAcc,
-            0b001010 => Opcode::SubRmAndReg,
-            0b0010110 => Opcode::SubImmFromAcc,
-            0b001110 => Opcode::CmpRmAndReg,
-            0b0011110 => Opcode::CmpImmToAcc,
-            0b100000 => Opcode::ImmToRm,
+            0b000000   => Opcode::AddRmAndReg,
+            0b0000010  => Opcode::AddImmToAcc,
+            0b001010   => Opcode::SubRmAndReg,
+            0b0010110  => Opcode::SubImmFromAcc,
+            0b001110   => Opcode::CmpRmAndReg,
+            0b0011110  => Opcode::CmpImmToAcc,
+            0b100000   => Opcode::ImmToRm,
             0b01110100 => Opcode::JmpEqual,
             0b01111100 => Opcode::JmpLess,
             0b01111110 => Opcode::JmpLessOrEqual,
@@ -289,12 +289,10 @@ impl Instruction {
                 let disp_lo = None;
                 let disp_hi = None;
 
-                let reg;
-                if opcode == Opcode::MovRmToReg {
-                    reg = Reg::from((first_byte & 0b111) << 1 | u8::from(w));
-                } else {
-                    reg = Reg::from(0b000 << 1 | u8::from(w));
-                }
+                let reg = match opcode {
+                    Opcode::MovRmToReg | Opcode::MovImmToReg => Reg::from((first_byte & 0b111) << 1 | u8::from(w)),
+                    _ => Reg::from(0b001 << 1 | u8::from(w))
+                };
 
                 let data = match w {
                     true => {
@@ -408,7 +406,7 @@ impl Instruction {
                 let w = false;
                 let s = None;
                 let mode = None;
-                let reg = Reg::UNIMPL; // NOTE: If there are issues, it may be here
+                let reg = Reg::UNIMPL; // NOTE: If there are issues, it may be here. Confirmed this is always showing as 'AX'
                 let r_m = None;
                 let disp_lo = None;
                 let disp_hi = None;
@@ -447,14 +445,12 @@ impl Instruction {
     pub fn execute(self, mem: &mut Memory) {
         match self.opcode {
             Opcode::MovImmToReg => {
-                println!("Moving Imm to Reg");
                 // Get mem loc
-                let mut loc: &mut MemLoc = mem.get_loc(self.dest.as_str())
+                let loc: &mut MemLoc = mem.get_loc(self.dest.as_str())
                     .expect("No memory location found!");
 
                 let val = self.source.parse::<u8>().unwrap(); // TODO: error handling
                 loc.write(val);
-
             },
             Opcode::MovRmToReg => println!("Moving Rm to Reg"),
             _ => todo!(),

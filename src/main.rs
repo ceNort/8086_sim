@@ -1,4 +1,4 @@
-#![allow(dead_code, unused_variables)]
+#![allow(dead_code, unused_variables, non_camel_case_types)]
 
 mod instruction;
 mod mem;
@@ -69,9 +69,6 @@ fn main() {
     // Initialize Memory
     let mut main_mem = Memory::new();
 
-    println!("MEMORY START:");
-    println!("{:?}", main_mem);
-
     let mut debug_output = String::new(); // For debug file
 
     let instructions: Vec<Instruction> = read_buffer_into_instructions(buffer, bindump, &mut debug_output);
@@ -81,25 +78,40 @@ fn main() {
     }
 
     let mut asm_output = String::from("bits 16\n");
+    let mut changed_reg_vec = Vec::new();
 
     for inst in instructions {
+        let mem_loc_string = inst.dest.clone();
+        changed_reg_vec.push(mem_loc_string.clone());
+
         // Write to output
-        let inst_string = format!("{} {}, {}\n", inst.str_val, inst.dest, inst.source);
+        let inst_string = format!("{} {}, {} ; ", inst.str_val, &mem_loc_string, inst.source);
+
+        // Write current mem val to output
+        let pre_mem_string = format!("{}:0x{:02x}", &mem_loc_string, main_mem.clone().read_loc(&mem_loc_string));
 
         asm_output.push_str(&inst_string);
+        asm_output.push_str(&pre_mem_string);
 
         // Execute any MOV instructions
         match inst.opcode {
             Opcode::MovImmToReg => inst.execute(&mut main_mem),
             Opcode::MovRmToReg => inst.execute(&mut main_mem),
-            _ => println!("Not executing instruction"),
+            _ => todo!("Only MovImmToReg and MovRmToReg implemented"),
         }
 
-        println!("{:?}", main_mem);
+        // Write new mem val to output
+        let post_mem_string = format!("->{}:0x{:02x}\n", &mem_loc_string, main_mem.clone().read_loc(&mem_loc_string));
+        asm_output.push_str(&post_mem_string);
     }
 
-    println!("MEMORY END:");
-    println!("{:?}", main_mem);
+    // Add final state of all changed registers to output
+    asm_output.push_str("\n\n; Final Registers:\n");
+    for reg in changed_reg_vec.into_iter() {
+        let reg_val = &main_mem.clone().read_loc(&reg);
+        let reg_str = format!(";    {}: 0x{:04x} ({})\n", reg, reg_val, reg_val);
+        asm_output.push_str(&reg_str);
+    }
 
     println!("{asm_output}");
 

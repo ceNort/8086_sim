@@ -102,7 +102,7 @@ impl fmt::Display for EffectiveAddress {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MemLoc {
     name: String,
     value: u8,
@@ -120,10 +120,10 @@ impl MemLoc {
         self.value = val;
     }
 
-    pub fn read(self) -> u8 { self.value }
+    pub fn read(self) -> u8 { self.value.clone() }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Memory {
     ax: MemLoc,
     cx: MemLoc,
@@ -160,6 +160,21 @@ impl Memory {
             "SI" => Some(&mut self.si),
             "DI" => Some(&mut self.di),
             _ => None,
+        }
+    }
+
+
+    pub fn read_loc(self, loc: &str) -> u8 {
+        match loc {
+            "AX" => self.ax.read(),
+            "CX" => self.cx.read(),
+            "DX" => self.dx.read(),
+            "BX" => self.bx.read(),
+            "SP" => self.sp.read(),
+            "BP" => self.bp.read(),
+            "SI" => self.si.read(),
+            "DI" => self.di.read(),
+            _ => todo!(),
         }
     }
 }
