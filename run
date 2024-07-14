@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# Pass filepath to binary as argument
+
+cargo run -- debug bindump file $1
