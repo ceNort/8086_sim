@@ -11,7 +11,6 @@ use std::process::exit;
 use mem::Memory;
 
 // TODO:
-//   - Mapping of registers/memory
 //   - Finish implementing commented out opcodes?
 
 
@@ -78,11 +77,9 @@ fn main() {
     }
 
     let mut asm_output = String::from("bits 16\n");
-    let mut changed_reg_vec = Vec::new();
 
     for inst in instructions {
         let mem_loc_string = inst.dest.clone();
-        changed_reg_vec.push(mem_loc_string.clone());
 
         // Write to output
         let inst_string = format!("{} {}, {} ; ", inst.str_val, &mem_loc_string, inst.source);
@@ -107,7 +104,7 @@ fn main() {
 
     // Add final state of all changed registers to output
     asm_output.push_str("\n\n; Final Registers:\n");
-    for reg in changed_reg_vec.into_iter() {
+    for reg in Memory::loc_list() {
         let reg_val = &main_mem.clone().read_loc(&reg);
         let reg_str = format!(";    {}: 0x{:04x} ({})\n", reg, reg_val, reg_val);
         asm_output.push_str(&reg_str);

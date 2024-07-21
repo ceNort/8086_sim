@@ -445,14 +445,25 @@ impl Instruction {
     pub fn execute(self, mem: &mut Memory) {
         match self.opcode {
             Opcode::MovImmToReg => {
+                // Get value to write
+                let val = self.source.parse::<u8>().unwrap(); // TODO: error handling
+
                 // Get mem loc
                 let loc: &mut MemLoc = mem.get_loc(self.dest.as_str())
-                    .expect("No memory location found!");
+                    .expect("No memory location found!"); // TODO: print out actual location
 
-                let val = self.source.parse::<u8>().unwrap(); // TODO: error handling
                 loc.write(val);
             },
-            Opcode::MovRmToReg => println!("Moving Rm to Reg"),
+            Opcode::MovRmToReg => {
+                // Get value to write
+                let val = mem.clone().read_loc(self.source.as_str());
+
+                // Get destination loc
+                let dest_loc: &mut MemLoc = mem.get_loc(self.dest.as_str())
+                    .expect("Destination memory location not found!"); // TODO: print out actual location
+
+                dest_loc.write(val);
+            },
             _ => todo!(),
         }
     }

@@ -177,4 +177,17 @@ impl Memory {
             _ => todo!(),
         }
     }
+
+    pub fn loc_list() -> Vec<&'static str> {
+        return vec![
+            "AX",
+            "CX",
+            "DX",
+            "BX",
+            "SP",
+            "BP",
+            "SI",
+            "DI",
+        ];
+    }
 }
